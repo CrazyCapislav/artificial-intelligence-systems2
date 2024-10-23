@@ -1,4 +1,3 @@
-# Получаем список всех персонажей через запрос к Prolog
 from pyswip import Prolog
 
 
@@ -9,7 +8,6 @@ def get_main_characters_from_prolog(prolog):
     return characters
 
 
-# Функция для парсинга персонажа
 def parse_character(input_str, characters):
     for character in characters:
         if character.lower() in input_str.lower():
@@ -17,7 +15,6 @@ def parse_character(input_str, characters):
     return None
 
 
-# Получение предметов для персонажа через запросы Prolog
 def get_items_from_prolog(main_character, prolog):
     items = []
     if main_character == 'kratos':
@@ -27,14 +24,12 @@ def get_items_from_prolog(main_character, prolog):
     else:
         return items
 
-    # Выполняем запрос к базе знаний Prolog
     for sol in prolog.query(query):
         items.append(sol['Item'])
 
     return items
 
 
-# Функция для получения целей через запрос к Prolog
 def get_goals_from_prolog(main_character, prolog):
     goals = []
     if main_character == 'kratos':
@@ -44,14 +39,12 @@ def get_goals_from_prolog(main_character, prolog):
     else:
         return goals
 
-    # Выполняем запрос к базе знаний Prolog
     for sol in prolog.query(query):
         goals.append(sol['Goal'])
 
     return goals
 
 
-# Функция для парсинга целей
 def parse_goal(input_str, main_character, prolog):
     goals = get_goals_from_prolog(main_character, prolog)
     for goal in goals:
@@ -60,9 +53,7 @@ def parse_goal(input_str, main_character, prolog):
     return None
 
 
-# Функция, предлагающая действия на основе цели
 def recommend_actions(goal, prolog, owned_item):
-    # Извлечение названия предмета из цели, если цель - это получение предмета
     if goal.startswith("obtain_"):
         goal = goal.replace("obtain_", "")
     elif goal.startswith("defeat_"):
@@ -70,27 +61,23 @@ def recommend_actions(goal, prolog, owned_item):
     else:
         goal = None
 
-    # Проверка, является ли цель предметом, и получение его хранителя
     keeper_query = f"keeperOf(Keeper, {goal})"
     keeper = None
     for sol in prolog.query(keeper_query):
         keeper = sol['Keeper']
         break
 
-    # Пошаговый план действий
     if keeper:
         print(f"System: The item '{goal}' is currently held by {keeper}. Defeat {keeper} to obtain it.")
         print(f"System: After defeating {keeper}, you can proceed to obtain {goal}.")
         return
 
-    # Получение предмета уязвимости цели
     weakness_query = f"hasWeakness({goal}, WeaknessItem)"
     weakness_item = None
     for sol in prolog.query(weakness_query):
         weakness_item = sol['WeaknessItem']
         break
 
-    # Получение телохранителей цели
     guards_query = f"guardOf(Guard, {goal})"
     guards = []
     for sol in prolog.query(guards_query):
@@ -111,14 +98,12 @@ def recommend_actions(goal, prolog, owned_item):
         print(f"System: Before defeating {goal.capitalize()}, you need to defeat all the guards.")
         for guard in guards:
             print(f"System: Defeat {guard} first.")
-            # Получение предмета уязвимости цели
             weakness_query = f"hasWeakness({guard}, WeaknessItem)"
             weakness_item = None
             for sol in prolog.query(weakness_query):
                 weakness_item = sol['WeaknessItem']
                 break
 
-            # Получение телохранителей цели
             guards_query = f"guardOf(Guard, {guard})"
             guards = []
             for sol in prolog.query(guards_query):
@@ -143,12 +128,10 @@ def recommend_actions(goal, prolog, owned_item):
     print(f"System: Finally, you can proceed to defeat {goal.capitalize()}.")
 
 
-# Основная программа
 if __name__ == "__main__":
     prolog = Prolog()
-    prolog.consult('lab2.pl')  # Подключаем вашу базу знаний Prolog
+    prolog.consult('lab2.pl')
 
-    # Получаем список всех известных персонажей через запрос к Prolog
     characters = get_main_characters_from_prolog(prolog)
 
     print(f"System: Choose your main character ({', '.join(characters)}):")
@@ -158,12 +141,10 @@ if __name__ == "__main__":
         print("System: Character not recognized. Please try again.")
         exit()
 
-    # Получаем предметы из Prolog
     items = get_items_from_prolog(main_character, prolog)
     print(f"System: What items does {main_character.capitalize()} have? List of available items: {', '.join(items)}")
     owned_item = input("User: ")
 
-    # Подсказка по доступным целям для выбранного персонажа
     available_goals = get_goals_from_prolog(main_character, prolog)
     print(
         f"System: What is the goal of {main_character.capitalize()}? List of available goals: {', '.join(available_goals)}")
